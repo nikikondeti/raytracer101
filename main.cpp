@@ -1,13 +1,39 @@
 //outputing a ppm file
 //a way to see the image by storing it into a file?
 
+//Commands to test:
+//g++ -std=c++23 main.cpp -o raytracer
+//./raytracer > image.ppm
+
 #include "color.h"
 #include "vec3.h"
 #include "ray.h"
 
 #include <iostream> //input & output stream
+//Rendering a 2D sphere using calculus 
+double hit_sphere(const point3 center, double radius, const ray& r) {
+    vec3 oc = center - r.origin();
+    auto a = r.direction().length_squared();
+    auto h = dot(r.direction(), oc);
+    auto c =  oc.length_squared() - radius*radius;
+    auto discriminant = h*h - a*c;
+    
+    //trying to see whether we hit the sphere or not so we can shade later
+    if (discriminant < 0) {
+        return -1.0; //need to make it a unit length
+    }else { //if it's pos + also unit length
+        return (h - std::sqrt(discriminant)) / a;
+    }
+}
+
 color ray_color(const ray& r) {
-    //creating the blue to white gradient after scaling direction to unit length
+    auto t = hit_sphere(point3(0, 0, -1), 0.5, r); //no -t's
+
+    if (t > 0.0) {
+        vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
+        return 0.5*color(N.x()+1, N.y()+1, N.z()+1);
+    }
+
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5*(unit_direction.y() + 1.0);
     return (1.0 - a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
